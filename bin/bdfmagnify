@@ -2,20 +2,27 @@
 use warnings;
 use strict;
 
-my $width_mult = 3;
-my $height_mult = 3;
-my $dot_width = 3;
-my $dot_height = 3;
+my $width_mult;
+my $height_mult;
+my $dot_width;
+my $dot_height;
+my $phosphor;
 
 use Getopt::Long;
 Getopt::Long::Configure("bundling", "gnu_compat");
-Getopt::Long::GetOptions("w|width" => \$width_mult,
-			 "h|height" => \$height_mult,
-			 "W|dot-width" => \$dot_width,
-			 "H|dot-height" => \$dot_height,
+Getopt::Long::GetOptions("w|width=i" => \$width_mult,
+			 "h|height=i" => \$height_mult,
+			 "W|dot-width=i" => \$dot_width,
+			 "H|dot-height=i" => \$dot_height,
 			 "p|phosphor" => \$phosphor,
-			 "?|help" => sub { usage(); exit(0); })
+			 "help" => sub { usage(); exit(0); })
   or die("Type '$0 --help' for help.\n");
+
+$width_mult  //= 3;
+$height_mult //= 3;
+$dot_width   //= $width_mult;
+$dot_height  //= $height_mult;
+$phosphor    //= 0;
 
 sub usage { print(<<"END"); }
 usage: $0 [OPTION ...] BDF >BDF
@@ -91,12 +98,12 @@ while (<>) {
 	    my $bits = pack("H" . length($_), $_);
 	    $bits = unpack("B" . $dwidth, $bits);
 	    my @bits = split('', $bits);
-	    $bits = join("", map { ($_ x $dot_width) . ("0" x ($width - $dot_width)) } @bits);
+	    $bits = join("", map { ($_ x $dot_width) . ("0" x ($width_mult - $dot_width)) } @bits);
 	    $bits = substr($bits, 0, $dest_dwidth);
 	    $bits = pack(("B" . $dest_dwidth), $bits);
 	    $bits = unpack("H" . int(($dest_dwidth + 3) / 4), $bits);
 
-	    foreach (1 .. $height - $dot_height) {
+	    foreach (1 .. $height_mult - $dot_height) {
 		print(("0" x length($bits)), "\n");
 	    }
 	    if ($phosphor && $dot_height > 2) {
